@@ -24,6 +24,8 @@ h1{max-width:760px;margin-bottom:24px;font-size:clamp(3rem,7vw,5.8rem);line-heig
 .lead{max-width:690px;margin-bottom:30px;color:var(--muted);font-size:clamp(1.08rem,2vw,1.28rem)}
 .store-row{display:flex;flex-wrap:wrap;gap:12px}
 .store-btn{min-width:190px;display:flex;align-items:center;gap:12px;padding:11px 16px;border:0;border-radius:12px;background:#202124;color:#fff;text-align:left;box-shadow:0 6px 16px rgba(32,33,36,.18);cursor:not-allowed;opacity:1}
+.store-download{background:#1558d6;cursor:pointer;text-decoration:none}
+.store-download:focus-visible{outline:3px solid #aecbfa;outline-offset:3px}
 .store-btn .mark{font-size:1.6rem}
 .store-btn small{display:block;color:#bdc1c6;font-size:.68rem;line-height:1.2;text-transform:uppercase}
 .store-btn strong{display:block;font-size:1rem;line-height:1.25}

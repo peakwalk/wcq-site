@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..');
+const sourceDir = path.join(repoRoot, 'src');
 const publicDir = path.join(repoRoot, 'public');
 const siteDir = publicDir;
 
@@ -41,6 +42,13 @@ const stableAssetPattern =
   /(?:https:\/\/well-control\.eaxmarketplace\.com\/)?assets\/(?!build\/)(?:app\.js|styles\.css|well-control-logo\.png|social-card\.png|icon-192\.png|icon-512\.png|favicon-32\.png|apple-touch-icon\.png)/;
 const hashedAssetPattern =
   /^assets\/build\/[^/]+\.[a-f0-9]{8,}\.(?:css|js|png|jpe?g|webp|woff2?|ico|svg)$/i;
+const androidDownloadMetadataPath = path.join(
+  sourceDir,
+  'data',
+  'android-production-download.json',
+);
+const androidDownloadUrlPattern =
+  /^https:\/\/zealot\.peakwalk\.tech\/download\/releases\/\d+$/;
 
 function assert(condition, message) {
   if (!condition) {
@@ -50,6 +58,17 @@ function assert(condition, message) {
 
 function read(relativePath) {
   return fs.readFileSync(path.join(siteDir, relativePath), 'utf8');
+}
+
+function readJson(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function htmlAttribute(attributes, name) {
+  const match = attributes.match(
+    new RegExp(`\\b${name}=(?:"([^"]+)"|'([^']+)'|([^\\s>]+))`, 'i'),
+  );
+  return match?.[1] || match?.[2] || match?.[3] || '';
 }
 
 function walk(dir, predicate, matches = []) {
@@ -90,6 +109,30 @@ for (const relativePath of requiredFiles) {
 const hashedAssets = walk(path.join(siteDir, 'assets/build'), (candidate) =>
   fs.statSync(candidate).isFile(),
 ).map((filePath) => path.relative(siteDir, filePath).split(path.sep).join('/'));
+
+assert(
+  fs.existsSync(androidDownloadMetadataPath),
+  'Missing Android production download metadata source',
+);
+const androidDownload = fs.existsSync(androidDownloadMetadataPath)
+  ? readJson(androidDownloadMetadataPath)
+  : {};
+assert(
+  androidDownloadUrlPattern.test(androidDownload.url),
+  'Android production download URL must be a Zealot direct release download URL',
+);
+assert(
+  typeof androidDownload.version === 'string' && androidDownload.version.length > 0,
+  'Android production download metadata must include version',
+);
+assert(
+  typeof androidDownload.build === 'string' && androidDownload.build.length > 0,
+  'Android production download metadata must include build',
+);
+assert(
+  typeof androidDownload.updatedAt === 'string' && androidDownload.updatedAt.length > 0,
+  'Android production download metadata must include updatedAt',
+);
 
 assert(hashedAssets.some((asset) => /\.css$/i.test(asset)), 'Missing hashed CSS asset');
 assert(hashedAssets.some((asset) => /\.js$/i.test(asset)), 'Missing hashed JavaScript asset');
@@ -195,6 +238,44 @@ assert(headers.includes('/assets/build/*'), '_headers must target hashed build a
 assert(headers.includes('max-age=31536000, immutable'), '_headers must give hashed assets immutable caching');
 assert(headers.includes('/service-worker.js'), '_headers must target service-worker freshness');
 assert(headers.includes('no-cache, must-revalidate'), '_headers must require shell revalidation');
+
+const indexHtml = read('index.html');
+const androidDownloadAnchor = indexHtml.match(
+  /<a\b(?=[^>]*\bid=(?:"android-direct-download"|'android-direct-download'|android-direct-download)(?:\s|>))([^>]*)>/i,
+);
+assert(Boolean(androidDownloadAnchor), 'index.html must include android-direct-download link');
+if (androidDownloadAnchor) {
+  const attributes = androidDownloadAnchor[1];
+  const href = htmlAttribute(attributes, 'href');
+  const version = htmlAttribute(attributes, 'data-download-version');
+  const build = htmlAttribute(attributes, 'data-download-build');
+  const updatedAt = htmlAttribute(attributes, 'data-download-updated-at');
+
+  assert(
+    href === androidDownload.url,
+    'index.html Android download href must match metadata source',
+  );
+  assert(
+    androidDownloadUrlPattern.test(href),
+    'index.html Android download href must be a Zealot direct release download URL',
+  );
+  assert(
+    version === androidDownload.version,
+    'index.html Android download version must match metadata source',
+  );
+  assert(
+    build === androidDownload.build,
+    'index.html Android download build must match metadata source',
+  );
+  assert(
+    updatedAt === androidDownload.updatedAt,
+    'index.html Android download updatedAt must match metadata source',
+  );
+  assert(
+    !/Zealot production/i.test(indexHtml),
+    'index.html must not expose internal Zealot production wording',
+  );
+}
 
 if (failures.length > 0) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));
