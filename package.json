@@ -8,7 +8,7 @@
     "dev": "parcel src/index.html src/privacy-policy.html src/terms-of-use.html src/educational-disclaimer.html src/offline.html --dist-dir .parcel-dev --public-url /",
     "prebuild": "npm run clean:dist",
     "build": "parcel build src/index.html src/privacy-policy.html src/terms-of-use.html src/educational-disclaimer.html src/offline.html --dist-dir public --public-url . --no-source-maps",
-    "postbuild": "node scripts/sanitize-parcel-build.js && node scripts/copy-static-files.js",
+    "postbuild": "node scripts/sanitize-parcel-build.js && node scripts/finalize-build-assets.js && node scripts/generate-service-worker.js",
     "review:local": "node scripts/review-local-site.js"
   },
   "engines": {
