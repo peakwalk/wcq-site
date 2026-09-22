@@ -1,0 +1,15 @@
+{
+  "name": "Well Control",
+  "short_name": "Well Control",
+  "description": "Professional well-control learning for IWCF Level 3 and 4 preparation and knowledge retention.",
+  "id": "https://well-control.eaxmarketplace.com",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b57d0",
+  "icons": [
+    {"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}

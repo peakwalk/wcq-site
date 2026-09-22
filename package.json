@@ -1,0 +1,23 @@
+{
+  "name": "wcq-site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public website for the Well Control mobile learning app",
+  "scripts": {
+    "clean:dist": "node -e \"require('fs').rmSync('public', { recursive: true, force: true })\"",
+    "dev": "parcel src/index.html src/privacy-policy.html src/terms-of-use.html src/educational-disclaimer.html src/offline.html --dist-dir .parcel-dev --public-url /",
+    "prebuild": "npm run clean:dist",
+    "build": "parcel build src/index.html src/privacy-policy.html src/terms-of-use.html src/educational-disclaimer.html src/offline.html --dist-dir public --public-url . --no-source-maps",
+    "postbuild": "node scripts/sanitize-parcel-build.js && node scripts/copy-static-files.js",
+    "review:local": "node scripts/review-local-site.js"
+  },
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "devDependencies": {
+    "@parcel/transformer-jsonld": "2.16.3",
+    "@parcel/transformer-webmanifest": "2.16.3",
+    "parcel": "^2.16.3"
+  },
+  "packageManager": "yarn@1.22.22"
+}

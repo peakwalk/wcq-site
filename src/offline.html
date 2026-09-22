@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Offline | Well Control App</title>
+<!-- Google Analytics is disabled on localhost to keep local development clean. -->
+<script>
+  (function loadGoogleAnalytics() {
+    var measurementId = 'G-9LXN46ZM80';
+    var localHosts = ['localhost', '127.0.0.1', '::1'];
+    if (localHosts.indexOf(window.location.hostname) !== -1) {
+      window['ga-disable-' + measurementId] = true;
+      return;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
+    var script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
+    document.head.appendChild(script);
+    gtag('js', new Date());
+    gtag('config', measurementId);
+  }());
+</script>
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" href="assets/favicon-32.png">
+</head>
+<body><main class="legal-hero"><div class="wrap"><img src="assets/icon-192.png" width="96" height="96" alt="Well Control logo"><h1>You are offline.</h1><p>The Well Control website is temporarily unavailable. Previously visited pages may remain available.</p><a class="btn" href="index.html">Return to the website</a></div></main></body>
+</html>

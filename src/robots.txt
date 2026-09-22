@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://well-control.eaxmarketplace.com/sitemap.xml
