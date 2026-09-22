@@ -6,18 +6,21 @@
   "scripts": {
     "clean:dist": "node -e \"require('fs').rmSync('public', { recursive: true, force: true })\"",
     "dev": "parcel src/index.html src/privacy-policy.html src/terms-of-use.html src/educational-disclaimer.html src/offline.html --dist-dir .parcel-dev --public-url /",
-    "prebuild": "npm run clean:dist",
+    "prebuild": "yarn clean:dist",
     "build": "parcel build src/index.html src/privacy-policy.html src/terms-of-use.html src/educational-disclaimer.html src/offline.html --dist-dir public --public-url . --no-source-maps",
     "postbuild": "node scripts/sanitize-parcel-build.js && node scripts/finalize-build-assets.js && node scripts/generate-service-worker.js",
-    "review:local": "node scripts/review-local-site.js"
+    "review:local": "node scripts/review-local-site.js",
+    "review:github-pages": "node scripts/review-github-pages-workflow.js",
+    "test": "yarn build && yarn review:local && yarn review:github-pages"
   },
   "engines": {
     "node": ">=22 <25"
   },
   "devDependencies": {
+    "@parcel/packager-raw-url": "2.16.3",
     "@parcel/transformer-jsonld": "2.16.3",
     "@parcel/transformer-webmanifest": "2.16.3",
-    "parcel": "^2.16.3"
+    "parcel": "2.16.3"
   },
   "packageManager": "yarn@1.22.22"
 }
