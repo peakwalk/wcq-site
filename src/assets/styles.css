@@ -10,6 +10,7 @@ img{display:block;max-width:100%}
 .header{position:sticky;z-index:20;top:0;border-bottom:1px solid rgba(218,220,224,.85);background:rgba(255,255,255,.94);backdrop-filter:blur(16px)}
 .nav{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}
 .brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:800}
+.brand picture{flex:0 0 auto}
 .brand img{width:48px;height:48px;border-radius:12px}
 .links{display:flex;align-items:center;gap:24px;color:var(--muted);font-size:.92rem;font-weight:700}
 .links a{text-decoration:none}
@@ -34,6 +35,7 @@ h1{max-width:760px;margin-bottom:24px;font-size:clamp(3rem,7vw,5.8rem);line-heig
 .phone:before{content:"";display:block;width:35%;height:20px;margin:-10px auto 14px;border-radius:0 0 14px 14px;background:#202124}
 .app-screen{padding:24px 20px 28px;border-radius:28px;background:linear-gradient(#fff,#f8fafd)}
 .app-top{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.app-top picture{flex:0 0 auto}
 .app-top img{width:54px;height:54px;border-radius:14px}
 .app-top strong{font-size:1.12rem}
 .app-top span{display:block;color:var(--muted);font-size:.8rem}

@@ -39,7 +39,7 @@ const canonicalUrls = new Map([
 
 const failures = [];
 const stableAssetPattern =
-  /(?:https:\/\/well-control\.eaxmarketplace\.com\/)?assets\/(?!build\/)(?:app\.js|styles\.css|well-control-logo\.png|social-card\.png|icon-192\.png|icon-512\.png|favicon-32\.png|apple-touch-icon\.png)/;
+  /(?:https:\/\/well-control\.eaxmarketplace\.com\/)?assets\/(?!build\/)(?:app\.js|styles\.css|well-control-logo\.(?:png|webp)|social-card\.png|icon-192\.png|icon-512\.png|favicon-32\.png|apple-touch-icon\.png)/;
 const hashedAssetPattern =
   /^assets\/build\/[^/]+\.[a-f0-9]{8,}\.(?:css|js|png|jpe?g|webp|woff2?|ico|svg)$/i;
 const androidDownloadMetadataPath = path.join(
@@ -102,6 +102,14 @@ function normalizeReference(value) {
   return value.split(/[?#]/, 1)[0].replace(/^\.\//, '');
 }
 
+function fileSize(relativePath) {
+  return fs.statSync(path.join(siteDir, relativePath)).size;
+}
+
+function minAssetSize(assets) {
+  return Math.min(...assets.map(fileSize));
+}
+
 for (const relativePath of requiredFiles) {
   assert(fs.existsSync(path.join(siteDir, relativePath)), `Missing ${relativePath}`);
 }
@@ -137,7 +145,20 @@ assert(
 assert(hashedAssets.some((asset) => /\.css$/i.test(asset)), 'Missing hashed CSS asset');
 assert(hashedAssets.some((asset) => /\.js$/i.test(asset)), 'Missing hashed JavaScript asset');
 assert(hashedAssets.some((asset) => /social-card\.[a-f0-9]{8,}\.png$/i.test(asset)), 'Missing hashed social-card image asset');
-assert(hashedAssets.some((asset) => /well-control-logo\.[a-f0-9]{8,}\.png$/i.test(asset)), 'Missing hashed logo image asset');
+const hashedLogoPngAssets = hashedAssets.filter((asset) =>
+  /well-control-logo\.[a-f0-9]{8,}\.png$/i.test(asset),
+);
+const hashedLogoWebpAssets = hashedAssets.filter((asset) =>
+  /well-control-logo\.[a-f0-9]{8,}\.webp$/i.test(asset),
+);
+assert(hashedLogoPngAssets.length > 0, 'Missing hashed logo PNG fallback image asset');
+assert(hashedLogoWebpAssets.length > 0, 'Missing hashed logo WebP image asset');
+if (hashedLogoPngAssets.length > 0 && hashedLogoWebpAssets.length > 0) {
+  assert(
+    minAssetSize(hashedLogoWebpAssets) < minAssetSize(hashedLogoPngAssets),
+    'Hashed logo WebP asset must be smaller than the PNG fallback',
+  );
+}
 
 for (const asset of hashedAssets) {
   assert(hashedAssetPattern.test(asset), `Build asset is not content-hashed: ${asset}`);
@@ -177,6 +198,26 @@ for (const relativePath of htmlFiles) {
       fs.existsSync(path.join(siteDir, referencedPath)),
       `${relativePath} references missing local asset ${value}`,
     );
+  }
+
+  const srcsetPattern = /\bsrcset=("([^"]+)"|'([^']+)'|([^\s>]+))/gi;
+  while ((match = srcsetPattern.exec(html))) {
+    const value = match[2] || match[3] || match[4];
+    const candidates = value
+      .split(',')
+      .map((candidate) => candidate.trim().split(/\s+/, 1)[0])
+      .filter(Boolean);
+    for (const candidate of candidates) {
+      if (!isLocalReference(candidate)) {
+        continue;
+      }
+
+      const referencedPath = normalizeReference(candidate);
+      assert(
+        fs.existsSync(path.join(siteDir, referencedPath)),
+        `${relativePath} references missing local srcset asset ${candidate}`,
+      );
+    }
   }
 
   const productionAssetPattern =
@@ -240,6 +281,30 @@ assert(headers.includes('/service-worker.js'), '_headers must target service-wor
 assert(headers.includes('no-cache, must-revalidate'), '_headers must require shell revalidation');
 
 const indexHtml = read('index.html');
+const visibleLogoExpectations = new Map([
+  ['index.html', 3],
+  ['privacy-policy.html', 1],
+  ['terms-of-use.html', 1],
+  ['educational-disclaimer.html', 1],
+]);
+const webpLogoSourcePattern =
+  /<source\b(?=[^>]*\bsrcset=(?:"[^"]*well-control-logo\.[a-f0-9]{8,}\.webp"|'[^']*well-control-logo\.[a-f0-9]{8,}\.webp'|[^\s>]*well-control-logo\.[a-f0-9]{8,}\.webp))(?=[^>]*\btype=(?:"image\/webp"|'image\/webp'|image\/webp))[^>]*>/gi;
+const pngLogoFallbackPattern =
+  /<img\b(?=[^>]*\bsrc=(?:"[^"]*well-control-logo\.[a-f0-9]{8,}\.png"|'[^']*well-control-logo\.[a-f0-9]{8,}\.png'|[^\s>]*well-control-logo\.[a-f0-9]{8,}\.png))[^>]*>/gi;
+for (const [relativePath, expectedCount] of visibleLogoExpectations) {
+  const html = read(relativePath);
+  const webpMatches = html.match(webpLogoSourcePattern) || [];
+  const pngMatches = html.match(pngLogoFallbackPattern) || [];
+  assert(
+    webpMatches.length >= expectedCount,
+    `${relativePath} must include hashed WebP sources for visible logo markup`,
+  );
+  assert(
+    pngMatches.length >= expectedCount,
+    `${relativePath} must include hashed PNG fallbacks for visible logo markup`,
+  );
+}
+
 const androidDownloadAnchor = indexHtml.match(
   /<a\b(?=[^>]*\bid=(?:"android-direct-download"|'android-direct-download'|android-direct-download)(?:\s|>))([^>]*)>/i,
 );
